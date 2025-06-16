@@ -6,3 +6,8 @@ Simulation of Crop lane following in Gazebo Harmonic
 
 cd ~/ros2_ws
 rosdep install --from-paths src --ignore-src --rosdistro humble -r -y
+
+
+in case of gazebo show the old cache 
+check ps aux | grep gz
+kill -9
