@@ -1,0 +1,25 @@
+<launch>
+  <node name="usb_cam_0" pkg="usb_cam" exec="usb_cam_node_exe" output="screen">
+  	<param name="video_device" value="/dev/video3" />
+  	<param name="framerate" value="10.0" />
+  	<param name="io_method" value="mmap" />
+  	<param name="frame_id" value="camera" />
+  	<param name="pixel_format" value="mjpeg2rgb" />
+  	<param name="av_device_format" value="YUV422P" />
+  	<param name="image_width" value="640" />
+  	<param name="image_height" value="480" />
+  	<param name="camera_name" value="test_camera" />
+  	<param name="camera_info_url" value="package://rover/config/camera_info.yaml" />
+  	<param name="brightness" value="-1" />
+  	<param name="contrast" value="-1" />
+  	<param name="saturation" value="-1" />
+  	<param name="sharpness" value="-1" />
+  	<param name="gain" value="-1" />
+  	<param name="auto_white_balance" value="true" />
+  	<param name="white_balance" value="4000" />
+  	<param name="autoexposure" value="true" />
+  	<param name="exposure" value="100" />
+  	<param name="autofocus" value="false" />
+  	<param name="focus" value="-1" />
+  </node>
+</launch>

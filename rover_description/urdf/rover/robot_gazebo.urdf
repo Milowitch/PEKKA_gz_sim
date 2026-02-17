@@ -1,0 +1,310 @@
+<ros2_control name="GazeboSystem" type="system">
+<hardware>
+    <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+</hardware>
+
+<joint name="fl_wheel_joint">
+    <command_interface name="velocity">
+    <param name="min">-3.14</param>
+    <param name="max">3.14</param>
+    </command_interface>
+    <state_interface name="velocity"/>
+    <state_interface name="effort"/>
+</joint>
+
+<joint name="fr_wheel_joint">
+    <command_interface name="velocity">
+    <param name="min">-3.14</param>
+    <param name="max">3.14</param>
+    </command_interface>
+    <state_interface name="velocity"/>
+    <state_interface name="effort"/>
+</joint>
+
+<joint name="rl_wheel_joint">
+    <command_interface name="velocity">
+    <param name="min">-3.14</param>
+    <param name="max">3.14</param>
+    </command_interface>
+    <state_interface name="velocity"/>
+    <state_interface name="effort"/>
+</joint>
+
+<joint name="rr_wheel_joint">
+    <command_interface name="velocity">
+    <param name="min">-3.14</param>
+    <param name="max">3.14</param>
+    </command_interface>
+    <state_interface name="velocity"/>
+    <state_interface name="effort"/>
+</joint>
+
+<joint name="fl_steering_joint">
+    <command_interface name="position">
+    <param name="min">-3.14</param>
+    <param name="max">3.14</param>
+    </command_interface>
+    <state_interface name="position"/>
+    <state_interface name="effort"/>
+</joint>
+
+<joint name="fr_steering_joint">
+    <command_interface name="position">
+    <param name="min">-3.14</param>
+    <param name="max">3.14</param>
+    </command_interface>
+    <state_interface name="position"/>
+    <state_interface name="effort"/>
+</joint>
+
+<joint name="rl_steering_joint">
+    <command_interface name="position">
+    <param name="min">-3.14</param>
+    <param name="max">3.14</param>
+    </command_interface>
+    <state_interface name="position"/>
+    <state_interface name="effort"/>
+</joint>
+
+<joint name="rr_steering_joint">
+    <command_interface name="position">
+    <param name="min">-3.14</param>
+    <param name="max">3.14</param>
+    </command_interface>
+    <state_interface name="position"/>
+    <state_interface name="effort"/>
+</joint>
+</ros2_control>
+
+<gazebo>
+<plugin name="four_ws_robot_joint_state" filename="libgazebo_ros_joint_state_publisher.so">
+    <ros>
+    <remapping>~/out:=joint_states</remapping>
+    </ros>
+    <update_rate>30</update_rate>
+    <joint_name>fl_wheel_joint</joint_name>
+    <joint_name>fr_wheel_joint</joint_name>
+    <joint_name>rl_wheel_joint</joint_name>
+    <joint_name>rr_wheel_joint</joint_name>
+    <joint_name>fl_steering_joint</joint_name>
+    <joint_name>fr_steering_joint</joint_name>
+    <joint_name>rl_steering_joint</joint_name>
+    <joint_name>rr_steering_joint</joint_name>
+</plugin>
+
+<plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
+    <parameters>/home/station/ros2_ws/install/rover_description/share/rover_description/config/controllers.yaml</parameters>
+</plugin>
+</gazebo>
+
+<gazebo reference="lidar_link">
+<sensor name="lidar" type="ray">
+    <pose>0 0 0 0 0 0</pose>
+    <always_on>true</always_on>
+    <visualize>false</visualize>
+    <update_rate>10</update_rate>
+    <ray>
+    <scan>
+        <horizontal>
+        <samples>360</samples>
+        <resolution>1.00000</resolution>
+        <min_angle>0.000000</min_angle>
+        <max_angle>6.280000</max_angle>
+        </horizontal>
+        <vertical>
+        <samples>90</samples>
+        <resolution>1.00000</resolution>
+        <min_angle>0.0</min_angle>
+        <max_angle>1.5708</max_angle>
+        </vertical>
+    </scan>
+    <range>
+        <min>0.10</min>
+        <max>30.00</max>
+        <resolution>0.015000</resolution>
+    </range>
+    <noise>
+        <type>gaussian</type>
+        <mean>0.0</mean>
+        <stddev>0.01</stddev>
+    </noise>
+    </ray>
+    <plugin name="scan" filename="libgazebo_ros_ray_sensor.so">
+    <ros>
+        <namespace>rover</namespace>
+        <remapping>~/out:=unitree/lidar_points</remapping>
+    </ros>
+    <output_type>sensor_msgs/PointCloud2</output_type>
+    <frame_name>lidar_link</frame_name>
+    </plugin>
+</sensor>
+</gazebo>
+<gazebo reference="imu_link">
+<sensor name="imu_sensor" type="imu">
+    <pose>0 0 0 0 0 0</pose>
+    <always_on>true</always_on>
+    <update_rate>10.0</update_rate>
+
+    <imu>
+    <angular_velocity>
+        <noise>
+        <type>gaussian</type>
+        <mean>0.0</mean>
+        <stddev>0.01</stddev>
+        </noise>
+    </angular_velocity>
+
+    <linear_acceleration>
+        <noise>
+        <type>gaussian</type>
+        <mean>0.0</mean>
+        <stddev>0.01</stddev>
+        </noise>
+    </linear_acceleration>
+
+    <orientation>
+        <noise>
+        <type>gaussian</type>
+        <mean>0.0</mean>
+        <stddev>0.001</stddev>
+        </noise>
+    </orientation>
+    </imu>
+
+    <plugin name="imu_sensor_plugin" filename="libgazebo_ros_imu_sensor.so">
+    <ros>
+        <namespace>rover</namespace>
+        <remapping>~/out:=unitree/imu</remapping>
+    </ros>
+    <frame_name>imu_link</frame_name>
+    </plugin>
+</sensor>
+</gazebo>
+<gazebo reference="gps_link">
+<sensor name="gps_sensor" type="gps">
+    <pose>0 0 0 0 0 0</pose>
+    <always_on>true</always_on>
+    <update_rate>10.0</update_rate>
+
+    <plugin name="gps_sensor_plugin" filename="libgazebo_ros_gps_sensor.so">
+    <ros>
+        <namespace>rover</namespace>
+        <remapping>~/out:=gps/rawdata</remapping>
+    </ros>
+    <frame_name>gps_link</frame_name>
+    </plugin>
+</sensor>
+</gazebo>
+<gazebo reference="camera_link">
+    <sensor name="depth_camera" type="depth">
+        <pose>0 0 0 0 0 0</pose>
+        <always_on>true</always_on>
+        <update_rate>30</update_rate>
+        <camera>
+            <horizontal_fov>1.047</horizontal_fov>
+            <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+            </image>
+            <clip>
+            <near>0.4</near>
+            <far>10</far>
+            </clip>
+        </camera>
+        <plugin name="gazebo_ros_camera" filename="libgazebo_ros_camera.so">
+            <ros>
+                <namespace>rover</namespace>
+            </ros>
+            <camera_name>camera</camera_name>
+            <frame_name>camera_frame</frame_name>
+
+            <image_topic>camera/color/image_raw</image_topic>
+            <camera_info_topic>camera/color/camera_info</camera_info_topic>
+            
+            <depth_image>true</depth_image>
+            <depth_image_topic>camera/depth/image_raw</depth_image_topic>
+            <depth_camera_info_topic>camera/depth/camera_info</depth_camera_info_topic>
+            
+            <point_cloud>true</point_cloud>
+            <point_cloud_topic>camera/depth/points</point_cloud_topic>
+        </plugin>
+    </sensor>
+</gazebo>
+
+
+<link name="camera_frame">
+    <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0" />
+    <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+    </inertial>
+</link>
+<joint name="camera_frame_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="1.5708 3.1416 1.5708" />
+    <parent link="camera_link" />
+    <child link="camera_frame" />
+    <axis xyz="0 0 1"/>
+    <limit effort="1.5" velocity="22" />
+    <joint_properties friction="0.0"/>
+</joint>
+<link name="camera_color_frame">
+    <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0" />
+    <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+    </inertial>
+</link>
+<joint name="camera_color_frame_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="camera_link" />
+    <child link="camera_color_frame" />
+    <axis xyz="0 0 1"/>
+    <limit effort="1.5" velocity="22" />
+    <joint_properties friction="0.0"/>
+</joint>
+<link name="camera_color_optical_frame">
+    <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0" />
+    <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+    </inertial>
+</link>
+<joint name="camera_color_optical_frame_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="camera_link" />
+    <child link="camera_color_optical_frame" />
+    <axis xyz="0 0 1"/>
+    <limit effort="1.5" velocity="22" />
+    <joint_properties friction="0.0"/>
+</joint>
+<link name="camera_depth_frame">
+    <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0" />
+    <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+    </inertial>
+</link>
+<joint name="camera_depth_frame_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="camera_link" />
+    <child link="camera_depth_frame" />
+    <axis xyz="0 0 1"/>
+    <limit effort="1.5" velocity="22" />
+    <joint_properties friction="0.0"/>
+</joint>
+<link name="camera_depth_optical_frame">
+    <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0" />
+    <inertia ixx="0" ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+    </inertial>
+</link>
+<joint name="camera_depth_optical_frame_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="camera_link" />
+    <child link="camera_depth_optical_frame" />
+    <axis xyz="0 0 1"/>
+    <limit effort="1.5" velocity="22" />
+    <joint_properties friction="0.0"/>
+</joint>

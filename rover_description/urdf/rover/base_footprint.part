@@ -1,0 +1,13 @@
+{
+    "configuration": "default",
+    "documentId": "46fb7e6057a02cf4a951721d",
+    "documentMicroversion": "7e88ff2d2852e46af52f96d2",
+    "elementId": "09a6dfe1be5c15e43748a93d",
+    "fullConfiguration": "default",
+    "id": "MrglNecDXwS1tC+ky",
+    "isStandardContent": false,
+    "name": "base_footprint <1>",
+    "partId": "JHD",
+    "suppressed": false,
+    "type": "Part"
+}

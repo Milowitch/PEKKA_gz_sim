@@ -1,0 +1,44 @@
+{
+    "onshape_api": "https://cad.onshape.com",
+    "onshape_access_key": "a6O1TSS33JoKnitBpIU7cGLb",
+    "onshape_secret_key": "1J1oimTTu8omP3DDzbJ6sK0apFYFFvNViE7aSSu3b0A6vTUC",
+
+    "documentId": "46fb7e6057a02cf4a951721d",
+    "packageName": "rover_description/urdf/rover",
+    "assemblyName": "rover",
+    "outputFormat": "urdf",
+    "robotName": "rover",
+    "additionalUrdfFile": "/robot_gazebo.urdf",
+
+    "drawFrames": false,
+    "drawCollisions": false,
+    "useScads": true,
+    "noDynamics": false,
+    "mergeSTLs": "no",
+    "simplifySTLs": "no",
+    "maxSTLSize": 3,
+
+    "jointMaxEffort": {
+        "default": 1.5,
+        "head_pitch": 0.5
+    },
+    "jointMaxVelocity": 22,
+
+    "dynamics": {
+        "motorcase": {
+            "mass": 0.5,
+            "com": [0, 0.1, 0],
+            "inertia": [0.1, 0, 0,
+                        0, 0.1, 0,
+                        0, 0, 0.1]
+        },
+        "base_footprint": "fixed"
+    },
+
+    "ignore": [
+        "part_4",
+        "x",
+        "y",
+        "z"
+    ]
+}

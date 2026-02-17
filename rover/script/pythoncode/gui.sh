@@ -1,0 +1,1 @@
+streamlit run streamlit2.py

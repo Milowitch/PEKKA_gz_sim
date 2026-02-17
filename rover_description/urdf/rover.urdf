@@ -1,0 +1,237 @@
+<?xml version="1.0"?>
+<robot name="rover">
+	<material name="grey">
+		<color rgba="0.7 0.7 0.7 1" />
+	</material>
+	<material name="blue">
+		<color rgba="0 0 1 1" />
+	</material>
+
+	<link name="base_footprint"/>
+	<joint name="base_link_joint" type="fixed">
+		<origin xyz="0 0 0" rpy="0 0 0"/>
+		<parent link="base_footprint"/>
+		<child link="base_link"/>
+	</joint>
+
+	<link name="base_link">
+		<visual>
+			<geometry>
+				<mesh
+				filename="package://rover_description/meshes/bases_rover/base_link.STL" />
+			</geometry>
+			<origin xyz="0 0 0.4" rpy="1.5708 0 1.5708" />
+			<material name="grey" />
+		</visual>
+		<collision>
+			<geometry>
+				<box size="0.8 0.6 1"/>
+			</geometry>
+			<origin xyz="0 0 0.75" rpy="0 0 0" />
+		</collision>
+		<inertial>
+			<mass value="0.01"/>
+			<inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+		</inertial>
+	</link>
+
+	<link name="roll_B_R">
+		<visual>
+			<geometry>
+				<mesh
+				filename="package://rover_description/meshes/bases_rover/roll_B_R.STL" />
+			</geometry>
+			<origin xyz="0.29 0.216 0.05" rpy="1.5708 0 1.5708" />
+			<material name="grey" />
+		</visual>
+		<collision>
+			<geometry>
+				<box size="0.26 0.3 0.24"/>
+			</geometry>
+			<origin xyz="0 0.05 -0.225" rpy="0 0 0" />
+		</collision>
+		<inertial>
+			<mass value="10"/>
+			<inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+		</inertial>
+	</link>
+
+	<link name="roll_B_L">
+		<visual>
+			<geometry>
+				<mesh
+				filename="package://rover_description/meshes/bases_rover/roll_B_L.STL" />
+			</geometry>
+			<origin xyz="0.29 -0.216 0.05" rpy="1.5708 0 1.5708" />
+			<material name="grey" />
+		</visual>
+		<collision>roll_B_L
+			<geometry>
+				<box size="0.26 0.3 0.24"/>
+			</geometry>
+			<origin xyz="0 -0.05 -0.225" rpy="0 0 0" />
+		</collision>
+		<inertial>
+			<mass value="10"/>
+			<inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+		</inertial>
+	</link>
+
+	<link name="roll_F_R">
+		<visual>
+			<geometry>
+				<mesh
+				filename="package://rover_description/meshes/bases_rover/roll_F_R.STL" />
+			</geometry>
+			<origin xyz="-0.28 0.213 0.05" rpy="1.5708 0 1.5708" />
+			<material name="grey" />
+		</visual>
+		<collision>
+			<geometry>
+				<box size="0.26 0.3 0.24"/>
+			</geometry>
+			<origin xyz="0 0.05 -0.225" rpy="0 0 0" />
+		</collision>
+		<inertial>
+			<mass value="10"/>
+			<inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+		</inertial>
+	</link>
+
+    <link name="roll_F_L">
+		<visual>
+			<geometry>
+				<mesh
+				filename="package://rover_description/meshes/bases_rover/roll_F_L.STL" />
+			</geometry>
+			<origin xyz="-0.28 -0.213 0.05" rpy="1.5708 0 1.5708" />
+			<material name="grey" />
+		</visual>
+		<collision>
+			<geometry>
+				<box size="0.26 0.3 0.24"/>
+			</geometry>
+			<origin xyz="0 -0.05 -0.225" rpy="0 0 0" />
+		</collision>
+		<inertial>
+			<mass value="10"/>
+			<inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+		</inertial>
+	</link>
+
+	<link name="lidar_link">
+		<visual>
+			<geometry>
+				<cylinder radius="0.05" length="0.1"/>
+			</geometry>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+			<material name="grey" />
+		</visual>
+		<collision>
+			<geometry>
+				<cylinder radius="0.05" length="0.1"/>
+			</geometry>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+		</collision>
+		<inertial>
+			<mass value="10"/>
+			<inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+		</inertial>
+	</link>
+
+	<link name="imu_link">
+		<visual>
+			<geometry>
+				<box size="0.1 0.085 0.065"/>
+			</geometry>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+			<material name="grey" />
+		</visual>
+		<collision>
+			<geometry>
+				<box size="0.1 0.085 0.065"/>
+			</geometry>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+		</collision>
+		<inertial>
+			<mass value="10"/>
+			<inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+		</inertial>
+	</link>
+
+	<link name="mag_link">
+		<visual>
+			<geometry>
+				<box size="0.1 0.085 0.065"/>
+			</geometry>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+			<material name="grey" />
+		</visual>
+		<collision>
+			<geometry>
+				<box size="0.1 0.085 0.065"/>
+			</geometry>
+			<origin xyz="0 0 0" rpy="0 0 0" />
+		</collision>
+		<inertial>
+			<mass value="10"/>
+			<inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+		</inertial>
+	</link>
+
+	<joint name="AMR1" type="continuous">
+		<parent link="base_link"/>
+		<child link="roll_B_R"/>
+		<origin xyz="-0.29 -0.216 0.35" rpy="0 0 0" />
+		<axis xyz = "0 0 1" />
+	</joint>
+
+	<joint name="AMR2" type="continuous">
+		<parent link="base_link"/>
+		<child link="roll_B_L"/>
+		<origin xyz="-0.29 0.216 0.35" rpy="0 0 0" />
+		<axis xyz = "0 0 1" />
+	</joint>
+
+	<joint name="AMR3" type="continuous">
+		<parent link="base_link"/>
+		<child link="roll_F_R"/>
+		<origin xyz="0.28 -0.213 0.35" rpy="0 0 0" />
+		<axis xyz = "0 0 1" />
+	</joint>
+
+	<joint name="AMR4" type="continuous">
+		<parent link="base_link"/>
+		<child link="roll_F_L"/>
+		<origin xyz="0.28 0.213 0.35" rpy="0 0 0" />
+		<axis xyz = "0 0 1" />
+	</joint>
+
+	<joint name="joint_base_footprint" type="fixed">
+		<parent link="base_footprint"/>
+		<child link="base_link"/>
+		<origin xyz="0 0 0" rpy="0 0 0" />
+		<axis xyz = "0 0 0" />
+	</joint>
+
+	<joint name="joint_lidar_link" type="fixed">
+		<parent link="base_link"/>
+		<child link="lidar_link"/>
+		<origin xyz="0 0 0.75" rpy="0 0 0" />
+		<axis xyz = "0 0 0" />
+	</joint>
+
+	<joint name="joint_imu_link" type="fixed">
+		<parent link="base_link"/>
+		<child link="imu_link"/>
+		<origin xyz="0.15 0 0.55" rpy="0 0 0" />
+		<axis xyz = "0 0 0" />
+	</joint>
+
+	<joint name="joint_mag_link" type="fixed">
+		<parent link="base_link"/>
+		<child link="mag_link"/>
+		<origin xyz="0.15 0 0.55" rpy="0 0 0" />
+		<axis xyz = "0 0 0" />
+	</joint>
+</robot>
