@@ -1,0 +1,30 @@
+collision_monitor:
+  ros__parameters:
+    use_sim_time: False
+    base_frame_id: "base_footprint"
+    odom_frame_id: "odom"
+    cmd_vel_in_topic: "cmd_vel_smoothed"
+    cmd_vel_out_topic: "cmd_vel_collision_monitor"
+    state_topic: "collision_monitor_state"
+    transform_tolerance: 0.5
+    source_timeout: 5.0
+    base_shift_correction: True
+    stop_pub_timeout: 2.0
+    enable_stamped_cmd_vel: False  # False for Jazzy หรือเก่ากว่า
+    use_realtime_priority: false
+    polygons: ["PolygonSlow"]
+    PolygonSlow:
+      type: "polygon"
+      points: [0.70, 0.43, 0.70, -0.43, -0.70, -0.43, -0.70, 0.43]
+      action_type: "slowdown"
+      min_points: 4
+      slowdown_ratio: 0.3
+      visualize: True
+      polygon_pub_topic: "polygon_slowdown"
+      enabled: True
+    observation_sources: ["scan"]
+    scan:
+      source_timeout: 0.2
+      type: "scan"
+      topic: "/scan"
+      enabled: True

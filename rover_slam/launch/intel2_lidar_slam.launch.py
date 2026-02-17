@@ -1,0 +1,306 @@
+
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
+from launch_ros.actions import Node
+from ament_index_python.packages import get_package_share_directory
+from launch_ros.descriptions import ParameterFile
+from nav2_common.launch import RewrittenYaml
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
+import os
+from os.path import expanduser
+
+def generate_launch_description():
+    package_share_directory = os.path.join(get_package_share_directory('rover_slam'), 'config')
+
+    # Use the arguments
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    deskewing = LaunchConfiguration('deskewing')
+    mapping = LaunchConfiguration('mapping')
+    file = LaunchConfiguration('file')
+
+    # Launch arguments
+    sim_time = DeclareLaunchArgument(
+        'use_sim_time', default_value='false',
+        description='Use simulation (Gazebo) clock if true')
+    
+    deskewing = DeclareLaunchArgument(
+        'deskewing', default_value='false',
+        description='Enable lidar deskewing')
+    
+    declare_mapping = DeclareLaunchArgument(
+        'mapping', default_value="'false'",
+        description='true is Mapping false is Localization')
+    declare_file = DeclareLaunchArgument(
+        'file', default_value="'~/maps/mymap_2.db'",
+        description='~/maps/mymap_2.db')
+
+
+    unitree_lidar = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            PathJoinSubstitution([
+                get_package_share_directory('unitree_lidar_ros2'),
+                'launch.py'
+            ])
+        ])
+    )
+
+    realsense2_camera = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            PathJoinSubstitution([
+                get_package_share_directory('realsense2_camera'),
+                'launch',
+                'd456_dual_camera_launch.py'
+            ])
+        ])
+    )
+
+    rgbd_sync0 = Node(
+        package='rtabmap_sync',
+        executable='rgbd_sync',
+        name='rgbd_sync0',
+        output='screen',
+        parameters=[{
+            'queue_size': 10,
+            'approx_sync': True,
+            'compressed': False
+        }],
+        remappings=[
+            ('rgb/image', 'rover/D456_1/color/image_raw'),
+            ('depth/image', 'rover/D456_1/aligned_depth_to_color/image_raw'),
+            ('rgb/camera_info', 'rover/D456_1/color/camera_info'),
+            ('rgbd_image', 'rgbd_image0'),
+        ]
+    )
+
+    rgbd_sync1 = Node(
+        package='rtabmap_sync',
+        executable='rgbd_sync',
+        name='rgbd_sync1',
+        output='screen',
+        parameters=[{
+            'queue_size': 10,
+            'approx_sync': True,
+            'compressed': False
+        }],
+        remappings=[
+            ('rgb/image', 'rover/D456_2/color/image_raw'),
+            ('depth/image', 'rover/D456_2/aligned_depth_to_color/image_raw'),
+            ('rgb/camera_info', 'rover/D456_2/color/camera_info'),
+            ('rgbd_image', 'rgbd_image1'),
+        ]
+    )
+
+    rtabmap_util = Node(
+        package='rtabmap_util', executable='point_cloud_assembler', output='screen',
+        parameters=[{
+            'max_clouds': 10,                # จำนวน point clouds ที่นำมารวมกัน
+            'fixed_frame_id': 'lidar_link', # ไอดีเฟรมของ Lidar
+            'use_sim_time': use_sim_time,   # ใช้ในการจำลอง
+            'range_min': 0.25,              # ระยะ Lidar ใกล้สุด
+            'range_max': 100.0,              # ระยะ Lidar ไกลสุด
+        }],
+        remappings=[
+            ('cloud', 'rover/unitree/lidar_points')
+        ]
+    )
+
+    parameters={
+        'frame_id': 'base_footprint',   # ไอดีเฟรมของ กล้อง
+        'odom_frame_id': 'odom',        # ไอดีเฟรมของ Odom
+        'subscribe_depth': False,       # ใช้ depth
+        'subscribe_rgbd': True,         # ใช้ rgbd
+        'subscribe_odom_info': True,    # ใช้ Odom info
+        'approx_sync': True,            # ทำการ sync ให้ข้อมูล และ time ของแต่ละเซนเซอร์ตรงกัน
+        'rgbd_cameras': 2,              # จำนวนกล้อง rgbd
+        'use_sim_time': use_sim_time,
+        # RTAB-Map's internal parameters are strings:
+        'Vis/BundleAdjustment': '1',
+        'Vis/FeatureType': '8',         # 0=SURF 1=SIFT 2=ORB 3=FAST/FREAK 4=FAST/BRIEF 5=GFTT/FREAK 6=GFTT/BRIEF 7=BRISK 8=GFTT/ORB
+        'Vis/MaxFeatures': '0',         # จำนวน Features 0=ไม่จำกัด
+        'Vis/MinDepth': '0.6',          # ระยะกล้องใกล้สุด
+        'Vis/MaxDepth': '6.0',          # ระยะกล้องไกลสุด
+        'Vis/MinInliers': '20',         # ความสอดคล้องของคุณลักษณะขั้นต่ำในการคำนวณ/ยอมรับการแปลง
+        'Vis/EstimationType': '0',
+        'ORB/EdgeThreshold': '19',      # นี่คือขนาดของเส้นขอบที่ไม่พบฟีเจอร์ใดๆ ซึ่งควรจะตรงกับพารามิเตอร์ patchSize โดยประมาณ
+        'ORB/FirstLevel': '0',          # ควรเป็น 0 ในการใช้งานปัจจุบัน
+        'ORB/Gpu': 'false',             # การใช้ gpu
+        'ORB/NLevels': '3',             # จำนวนระดับพีระมิด ระดับที่เล็กที่สุดจะมีขนาดเชิงเส้นเท่ากับ input_image_linear_size/pow(scaleFactor, nlevels)
+        'ORB/PatchSize': '31',          # ขนาดของแพตช์ที่ใช้โดยตัวระบุ BRIEF แบบวางแนว แน่นอนว่าในเลเยอร์พีระมิดขนาดเล็ก พื้นที่ภาพที่รับรู้ซึ่งครอบคลุมโดยฟีเจอร์จะมีขนาดใหญ่กว่า
+        'ORB/ScaleFactor': '2',         # อัตราส่วนการลดขนาดพีระมิดมากกว่า 1 scaleFactor==2 หมายถึงพีระมิดแบบคลาสสิก โดยแต่ละระดับถัดไปจะมีพิกเซลน้อยกว่าระดับก่อนหน้า 4 เท่า แต่ปัจจัยมาตราส่วนที่ใหญ่ขนาดนี้จะทำให้คะแนนการจับคู่ฟีเจอร์ลดลงอย่างมาก ในทางกลับกัน หากปัจจัยมาตราส่วนที่ใกล้ 1 เกินไป หมายความว่าคุณจะต้องใช้ระดับพีระมิดมากขึ้นเพื่อให้ครอบคลุมช่วงมาตราส่วนบางช่วง และความเร็วจะลดลง
+        'ORB/ScoreType': '0',           # HARRIS_SCORE=0 เป็นค่าเริ่มต้น ซึ่งหมายความว่าอัลกอริทึมของ Harris ถูกใช้เพื่อจัดอันดับฟีเจอร์ (คะแนนจะถูกเขียนลงใน KeyPoint::score และใช้เพื่อรักษาฟีเจอร์ nfeatures ที่ดีที่สุดไว้) FAST_SCORE=1 คือค่าทางเลือกของพารามิเตอร์ที่สร้างคีย์พอยต์ที่เสถียรน้อยกว่าเล็กน้อย แต่คำนวณได้เร็วกว่าเล็กน้อย
+        'ORB/WTA_K': '2',               # จำนวนจุดที่สร้างแต่ละองค์ประกอบของตัวระบุ BRIEF ที่วางแนว ค่าเริ่มต้น 2 หมายถึง BRIEF ที่เราสุ่มคู่จุดและเปรียบเทียบความสว่างของจุดเหล่านั้น ดังนั้นเราจึงได้รับการตอบสนอง 0/1 ค่าที่เป็นไปได้อื่นๆ คือ 3 และ 4 ตัวอย่างเช่น 3 หมายถึงเราสุ่ม 3 จุด (แน่นอนว่าพิกัดจุดเหล่านี้เป็นแบบสุ่ม แต่สร้างขึ้นจากค่าซีดที่กำหนดไว้ล่วงหน้า ดังนั้นองค์ประกอบแต่ละองค์ประกอบของตัวระบุ BRIEF จึงถูกคำนวณจากสี่เหลี่ยมพิกเซลอย่างแม่นยำ) ค้นหาจุดที่มีความสว่างสูงสุดและดัชนีเอาต์พุตของผู้ชนะ (0, 1 หรือ 2) เอาต์พุตดังกล่าวจะใช้ 2 บิต ดังนั้นจึงต้องใช้รูปแบบพิเศษของระยะทางแฮมมิง ซึ่งแสดงเป็น NORM_HAMMING2 (2 บิตต่อช่อง) เมื่อ WTA_K=4 เราจะสุ่ม 4 จุดเพื่อคำนวณแต่ละช่อง (ซึ่งจะครอบครอง 2 บิตที่มีค่าที่เป็นไปได้ 0, 1, 2 หรือ 3)
+        'KAZE/Threshold': '0.0002',     
+
+        'Reg/Strategy': '2',            # 0=Vis, 1=Icp, 2=VisIcp
+        'Optimizer/Strategy': '2',      # Graph optimization strategy: 0=TORO, 1=g2o and 2=GTSAM
+        'Optimizer/PriorsIgnored': 'true',
+        'Optimizer/Iterations': '20',
+        'Optimizer/Epsilon': '0.0',
+    }
+
+    # RGBD Odometry Node
+    rgbd_odometry = Node(
+        package='rtabmap_odom',
+        executable='rgbd_odometry',
+        output='screen',
+        name='rgbd_odometry',
+        parameters=[{
+            # RTAB-Map's internal parameters are strings:
+            'Odom/FilteringStrategy': '1',          # 0=No filtering 1=Kalman filtering 2=Particle filtering
+            'Odom/KalmanMeasurementNoise': '0.01',  # ค่าความแปรปรวนร่วมของเสียงในกระบวนการ
+            'Odom/KalmanProcessNoise': '0.001',     # ค่าความแปรปรวนร่วมในการวัดกระบวนการ
+            'Odom/Strategy': '1',                   # 0=Frame-to-Map (F2M) 1=Frame-to-Frame (F2F)
+            'Odom/ResetCountdown': '1',             # รีเซ็ตโอโดมิเตอร์โดยอัตโนมัติหลังจากภาพติดต่อกัน X ภาพซึ่งโอโดมิเตอร์ไม่สามารถคำนวณได้ (ค่า = 0 ปิดใช้งานการรีเซ็ตอัตโนมัติ)
+            'Odom/ValidDepthRatio': 'false',        # อัตราส่วนความลึกที่ถูกต้อง
+            'Odom/Holonomic': 'true',               # หากหุ่นยนต์เป็นแบบโฮโลโนมิก (สามารถออกคำสั่งเคลื่อนที่ไปข้างหน้าได้) หากไม่เป็นเช่นนั้น ค่า y จะถูกประมาณจากค่า x และค่า yaw (y=x*tan(yaw))
+            'Odom/AlignWithGround': 'true',         # จัดตำแหน่งโอโดมิเตอร์ให้ตรงกับพื้นดินเมื่อเริ่มต้นใช้งาน
+        },parameters]
+    )
+
+    # RTAB-Map SLAM Node
+    rtabmap_slam = Node(
+        package='rtabmap_slam',
+        executable='rtabmap',
+        name='rtabmap_slam',
+        output='screen',
+        parameters=[{
+            'subscribe_scan_cloud': True,           # ใช้งาน scan cloud Lidar
+            'odom_sensor_sync': False,              # odom ของทุกเซนเซอร์ sync กัน
+            # RTAB-Map's internal parameters are strings:
+            'RGBD/ProximityMaxGraphDepth': '5',     # ความลึกสูงสุดจากตำแหน่งการปิดลูปปัจจุบัน/ครั้งสุดท้ายและสมมติฐานการปิดลูปในพื้นที่ ตั้งค่า 0 เพื่อละเว้น
+            'RGBD/ProximityPathMaxNeighbors': '2',
+            'RGBD/LinearUpdate': '0.1',            # การเคลื่อนที่เชิงเส้นขั้นต่ำเพื่ออัปเดตแผนที่ การซ้อมจะทำก่อนหน้านี้ ดังนั้นน้ำหนักจึงยังคงได้รับการอัปเดต
+            'RGBD/AngularUpdate': '0.01',           # การเคลื่อนที่เชิงมุมขั้นต่ำเพื่ออัปเดตแผนที่ การซ้อมจะทำก่อนหน้านี้ ดังนั้นน้ำหนักจึงยังคงได้รับการอัปเดต
+            'RGBD/CreateOccupancyGrid': 'true',     # สร้างตารางสำหรับ rgbd
+            'RGBD/ForceOdom3DoF': 'true',           # odom แบบ 3D
+
+            'Mem/NotLinkedNodesKept': 'false',      # ไม่เก็บโหนดที่เชื่อมโยงไว้ในฐานข้อมูล (โหนดที่ซ้อมและโหนดที่ถูกลบ)
+            'Mem/STMSize': '200',                   # ขนาดหน่วยความจำระยะสั้น
+            'ImuFilter/ComplementaryBiasAlpha': '0.98',  # IMU complementary filter bias alpha
+            'ImuFilter/ComplementaryDoAdpativeGain': 'true',
+            'ImuFilter/MadgwickGain': '0.5',        # Madgwick filter gain
+            'ImuFilter/MadgwickZeta': '0.1',        # Madgwick filter Zeta
+
+            'Icp/Strategy': '1',                    #ICP implementation: 0=Point Cloud Library, 1=libpointmatcher, 2=CCCoreLib (CloudCompare)
+            'Icp/RangeMin': '0.25',                 # ระยะ Lidar ใกล้สุด
+            'Icp/RangeMax': '100.0',                # ระยะ Lidar ไกลสุด
+            'Icp/VoxelSize': '0',                   # ขนาดวอกเซลการสุ่มตัวอย่างแบบสม่ำเสมอ (0=ปิดใช้งาน)
+            'Icp/PointToPlaneK': '30',              # จำนวนเพื่อนบ้านที่จะคำนวณค่าปกติสำหรับจุดต่อระนาบ
+            'Icp/PointToPlaneRadius': '0',          # รัศมีเพื่อนบ้านที่จะคำนวณค่าปกติสำหรับจุดต่อระนาบ
+            'Icp/PointToPlane': 'true',             # ใช้จุดต่อระนาบ ICP
+            'Icp/Iterations': '30',                 # การวนซ้ำสูงสุด
+            'Icp/Epsilon': '0.001',                 # ตั้งค่า epsilon ของการแปลง (ค่าความแตกต่างสูงสุดที่อนุญาตระหว่างการแปลงสองครั้งติดต่อกัน) เพื่อให้พิจารณาว่าการเพิ่มประสิทธิภาพนั้นบรรจบกับโซลูชันสุดท้ายแล้ว
+            'Icp/MaxTranslation': '1.5',            # การยอมรับการแก้ไขการแปล ICP สูงสุด (ม.)
+            'Icp/MaxCorrespondenceDistance': '0.1', # ระยะทางสูงสุดสำหรับการโต้ตอบจุด
+            'Icp/OutlierRatio': '0.6',              # อัตราส่วนที่ผิดปกติ
+            'Icp/CorrespondenceRatio': '0.02',      # อัตราส่วนของการจับคู่ความสอดคล้องเพื่อยอมรับการแปลง
+
+            'Grid/MaxObstacleHeight': '2.0',        # เพิกเฉยสิ่งกีดขวางที่สูงเกิน (เมตร)
+            'Grid/RangeMin': '0.0',
+            'Grid/RangeMax': '100.0',
+            'Grid/MinClusterSize': '20',
+            'Grid/NormalK': '20',
+            # 'Grid/FootprintHeight': '1.5',
+            # 'Grid/FootprintLength': '0.59',
+            # 'Grid/FootprintWidth': '0.51',
+            'Grid/Sensor': '2',                     #Create occupancy grid from selected sensor: 0=laser scan, 1=depth image(s) or 2=both laser scan and depth image(s)
+            'Grid/CellSize': '0.05',
+            'Grid/3D': 'false',
+            'Grid/RayTracing': 'false',
+
+            'GridGlobal/FootprintRadius': '0.40',
+            'GridGlobal/OccupancyThr': '0.65',
+
+            # 'Mem/IncrementalMemory': mapping, # false is localization true is mapping
+            # 'database_path': file,
+        },parameters],
+        remappings=[
+            ('scan_cloud', 'assembled_cloud'),
+            # ('imu', 'rover/D456_1/imu'),
+            ('imu', 'rover/unitree/imu'),
+            # ('gps/fix', 'gps/rawdata'),
+        ],
+        arguments=[
+            '-d'  # This will delete the previous database (~/.ros/rtabmap.db)
+        ]
+    )
+
+    # RTAB-Map Viz Node
+    rtabmap_viz = Node(
+        package='rtabmap_viz',
+        executable='rtabmap_viz',
+        output='screen',
+        parameters=[{
+            'frame_id': 'base_footprint',
+            'odom_frame_id': 'odom',
+            'use_sim_time': use_sim_time,
+        }]
+    )
+
+    lidar_tf = Node(
+        name="lidar_static_transform_publisher",
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        arguments=[
+            "-0.16", # translation_x
+            "0.07", # translation_y
+            "0.05", # translation_z
+            "1.5707",  # rotation_yaw
+            "0.7854",# rotation_pitch
+            "0.0", # rotation_roll
+            "D456_1_link",  # parant D456_1_link
+            "lidar_link",   # child
+        ]
+    )
+
+    base_footprint_tf = Node(
+        name="lidar_static_transform_publisher",
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        arguments=[
+            "0.0", # translation_x
+            "0.0", # translation_y
+            "0.0", # translation_z
+            "0.0",  # rotation_yaw
+            "0.0",# rotation_pitch
+            "0.0", # rotation_roll
+            "base_footprint",  # parant
+            "base_link",   # child
+        ]
+    )
+
+    base_link_tf = Node(
+        name="lidar_static_transform_publisher",
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        arguments=[
+            "0.16", # translation_x
+            "0.0", # translation_y
+            "0.29", # translation_z
+            "0.0",  # rotation_yaw
+            "0.0",# rotation_pitch
+            "0.0", # rotation_roll
+            "base_link",  # parant
+            "D456_1_link",   # child
+        ]
+    )
+    
+    return LaunchDescription([
+        sim_time,
+        deskewing,
+        declare_mapping,
+        declare_file,
+        unitree_lidar,
+        realsense2_camera,
+        lidar_tf,
+        base_footprint_tf,
+        base_link_tf,
+        rtabmap_util,
+        rgbd_sync0,
+        rgbd_sync1,
+        rgbd_odometry,
+        rtabmap_slam,
+        rtabmap_viz
+    ])
